@@ -1,0 +1,24 @@
+{
+  "name": "wellness-gym-mobile",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Application mobile Android / iPhone du personnel de la salle de sport WELLNESS HOTEL (Capacitor).",
+  "scripts": {
+    "preparer": "node scripts/preparer.js",
+    "android:init": "npm run preparer && npx cap add android && node scripts/adapter-android.js && npx capacitor-assets generate --android",
+    "android:sync": "npm run preparer && npx cap sync android && node scripts/adapter-android.js",
+    "android:ouvrir": "npx cap open android",
+    "ios:init": "npm run preparer && npx cap add ios && npx capacitor-assets generate --ios && bash scripts/adapter-ios.sh",
+    "ios:sync": "npm run preparer && npx cap sync ios && bash scripts/adapter-ios.sh",
+    "ios:ouvrir": "npx cap open ios"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/core": "^7.0.0",
+    "@capacitor/ios": "^7.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^7.0.0"
+  }
+}

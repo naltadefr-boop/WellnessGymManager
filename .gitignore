@@ -1,0 +1,16 @@
+# Fichiers à ne PAS envoyer sur GitHub
+.venv/
+.venv-build/
+__pycache__/
+*.pyc
+donnees/
+staticfiles/
+build/
+dist/
+installer/Output/
+mobile/node_modules/
+mobile/www/
+mobile/android/
+mobile/ios/
+*.sqlite3
+secret.key

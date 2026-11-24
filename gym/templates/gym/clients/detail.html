@@ -1,0 +1,109 @@
+{% extends "gym/base.html" %}{% load gym_extras %}
+{% block titre %}{{ client.nom_complet }}{% endblock %}
+{% block contenu %}
+<div class="entete-page">
+  <div class="fiche-client"><div class="avatar">{{ client|initiales }}</div>
+    <div><h1 style="margin:0">{{ client.nom_complet }} {% if not client.actif %}<span class="badge neutre">Fiche archivée</span>{% endif %}</h1>
+      <div class="muted">{{ client.identifiant }} · {{ client.telephone }}{% if client.email %} · {{ client.email }}{% endif %} · inscrit le {{ client.date_inscription|date:"d/m/Y" }}</div></div></div>
+  {% if not user.est_coach %}
+  <div class="actions">
+    <a class="btn btn-primaire" href="{% url 'presences' %}?client={{ client.pk }}">{% icone 'clock' %} Pointage</a>
+    <a class="btn btn-or" href="{% url 'client_vente' client.pk %}">{% icone 'card' %} Renouveler / vendre</a>
+    <a class="btn" href="{% url 'client_carte' client.pk %}" target="_blank">Carte de membre</a>
+    <a class="btn" href="{% url 'client_modifier' client.pk %}">Modifier</a>
+  </div>{% endif %}
+</div>
+
+<div class="grille g-2-1">
+  <div>
+    <div class="carte">
+      <h2>Abonnement et séances</h2>
+      {% with acces=r.acces %}
+      {% if r.presence %}<div class="verdict present"><div class="icone">●</div><div><div class="titre">PRÉSENT EN SALLE</div>depuis {{ r.presence.heure_entree|heure }} ({{ r.presence.duree_actuelle|duree }})</div></div>
+      {% elif acces.autorise %}<div class="verdict ok"><div class="icone">✔</div><div><div class="titre">ACCÈS AUTORISÉ</div>{{ acces.abonnement.designation }}</div></div>
+      {% else %}<div class="verdict bloque"><div class="icone">✖</div><div><div class="titre">ACCÈS BLOQUÉ</div>{{ acces.message }}</div></div>{% endif %}
+      {% for a in acces.avertissements %}<div class="msg warning">{{ a }}</div>{% endfor %}
+      {% endwith %}
+      {% include "gym/_soldes.html" %}
+      {% if r.droits and r.abonnement.est_mensuel and not r.droits.illimite %}
+      <h3 class="mt">Calendrier des droits</h3>
+      <div class="semaines">{% for s in r.droits.semaines %}
+        <div class="semaine {{ s.statut }}"><div class="t">Semaine {{ s.numero }}</div>
+          <div class="muted">{{ s.debut|date:"d/m" }} → {{ s.fin|date:"d/m" }}{% if s.jours < 7 %} ({{ s.jours }} j){% endif %}</div>
+          <div>{{ s.utilisees }} / {{ s.autorisees }}{% if s.report_entrant %} <span class="muted">(+{{ s.report_entrant }} reporté)</span>{% endif %}</div>
+          <div class="jauge"><span style="width:{{ s.utilisees|pourcentage:s.autorisees }}%"></span></div></div>
+      {% endfor %}</div>
+      <p class="muted petit">Séances non utilisées : {% if r.abonnement.report_seances %}reportées sur la semaine suivante{% else %}perdues en fin de semaine{% endif %}.</p>
+      {% endif %}
+    </div>
+
+    <div class="carte"><h2>Derniers passages</h2>
+      <div class="table-wrap"><table class="tableau"><thead><tr><th>Date</th><th>Arrivée</th><th>Départ</th><th>Durée</th><th>Formule</th><th>Statut</th><th></th></tr></thead><tbody>
+      {% for p in presences_recentes %}<tr><td>{{ p.date|date:"d/m/Y" }}</td><td>{{ p.heure_entree|heure }}</td><td>{{ p.heure_sortie|heure }}</td><td>{{ p.duree_minutes|duree }}</td><td class="petit">{{ p.type_abonnement|truncatechars:30 }}</td>
+        <td>{% if p.statut == "ANNULEE" %}<span class="badge neutre" title="{{ p.motif_annulation }}">Annulée</span>{% elif p.statut == "EN_COURS" %}<span class="badge info">Présent</span>{% else %}<span class="badge ok">Sorti</span>{% endif %}</td>
+        <td class="droite">{% if p.statut != "ANNULEE" and not user.est_coach %}<details class="repli" style="display:inline-block;margin:0;padding:3px 8px"><summary class="petit">Annuler</summary>
+          <form method="post" action="{% url 'presence_annuler' p.pk %}" data-confirm="Annuler ce passage ? La séance sera recréditée au client.">{% csrf_token %}
+            <input class="champ mt" name="ap{{ p.pk }}-motif" placeholder="Motif (pointage par erreur…)" required>
+            {% if not user.est_admin %}<input class="champ mt" name="ap{{ p.pk }}-resp_identifiant" placeholder="Identifiant responsable"><input class="champ mt" type="password" name="ap{{ p.pk }}-resp_mot_de_passe" placeholder="Mot de passe responsable">{% endif %}
+            <button class="btn btn-petit btn-danger mt">Confirmer</button></form></details>{% endif %}</td></tr>
+      {% empty %}<tr><td colspan="7" class="vide">Aucun passage.</td></tr>{% endfor %}</tbody></table></div>
+    </div>
+
+    <div class="carte"><h2>Historique chronologique</h2>
+      <ul class="chrono">{% for e in historique %}
+        <li><span class="d">{{ e.date|dateheure }}</span><span>{% if e.type == "entree" %}→{% elif e.type == "sortie" %}←{% elif e.type == "paiement" %}✓{% elif e.type == "facture" %}▤{% elif e.type == "abonnement" %}★{% elif e.type == "incident" %}⚠{% else %}•{% endif %}</span>
+          <span>{{ e.texte }}{% if e.auteur %} <span class="auteur">— {{ e.auteur }}</span>{% endif %}</span></li>
+      {% empty %}<li class="muted">Aucun événement.</li>{% endfor %}</ul>
+    </div>
+  </div>
+
+  <div>
+    <div class="carte"><h2>Informations</h2>
+      <table class="tableau"><tbody>
+        <tr><td class="muted">Identifiant</td><td><b>{{ client.identifiant }}</b></td></tr>
+        <tr><td class="muted">Sexe</td><td>{{ client.get_sexe_display|default:"—" }}</td></tr>
+        <tr><td class="muted">Coach attitré</td><td>{{ client.coach|default:"—" }}</td></tr>
+        <tr><td class="muted">Enregistré par</td><td>{{ client.cree_par|default:"—" }}</td></tr>
+        {% if user.voit_finances %}<tr><td class="muted">Reste à payer</td><td>{% if r.reste_a_payer %}<b style="color:var(--danger)">{{ r.reste_a_payer|fcfa }}</b>{% else %}<span class="badge ok">À jour</span>{% endif %}</td></tr>{% endif %}
+        {% if client.observations %}<tr><td class="muted">Observations</td><td>{{ client.observations|linebreaksbr }}</td></tr>{% endif %}
+      </tbody></table>
+      <div class="centre mt"><img src="{% url 'client_qr' client.pk %}" alt="QR code" width="120" height="120"><div class="muted petit">QR code du client</div></div>
+      {% if user.est_admin %}<form method="post" action="{% url 'client_basculer' client.pk %}" class="centre mt" data-confirm="{% if client.actif %}Archiver cette fiche ? L'historique est conservé.{% else %}Réactiver cette fiche ?{% endif %}">{% csrf_token %}
+        <button class="btn btn-petit btn-danger">{% if client.actif %}Archiver la fiche{% else %}Réactiver la fiche{% endif %}</button></form>{% endif %}
+    </div>
+
+    {% if user.voit_finances %}
+    <div class="carte"><h2>Factures</h2>
+      <table class="tableau"><tbody>{% for t in transactions %}
+        <tr><td><a href="{% url 'transaction' t.pk %}">{{ t.facture.numero }}</a><div class="muted petit">{{ t.cree_le|date:"d/m/Y" }} · {{ t.get_type_display }}</div></td>
+          <td class="droite">{{ t.montant_du|fcfa }}<div>{% if t.statut == "ANNULEE" %}<span class="badge neutre">Annulée</span>{% elif t.reste %}<span class="badge danger">Reste {{ t.reste|fcfa }}</span>{% else %}<span class="badge ok">Payée</span>{% endif %}</div></td></tr>
+      {% empty %}<tr><td class="vide">Aucune facture.</td></tr>{% endfor %}</tbody></table>
+    </div>
+    <div class="carte"><h2>Abonnements souscrits</h2>
+      <table class="tableau"><tbody>{% for x in abonnements %}{% with a=x.a %}
+        <tr><td>{{ a.designation }}<div class="muted petit">{{ a.date_debut|date:"d/m/Y" }} → {{ a.date_fin|date:"d/m/Y" }}{% if a.est_renouvellement %} · renouvellement{% endif %}</div></td>
+          <td class="droite"><span class="badge {% etat_badge a.etat %}">{{ a.etat_libelle }}</span></td></tr>{% endwith %}
+      {% empty %}<tr><td class="vide">Aucun.</td></tr>{% endfor %}</tbody></table>
+    </div>
+    {% endif %}
+
+    <div class="carte"><h2>Observation / incident</h2>
+      <form method="post" action="{% url 'client_observation' client.pk %}">{% csrf_token %}
+        <div class="form-grille" style="grid-template-columns:1fr">{% include "gym/_champs.html" with form=obs_form %}</div>
+        <button class="btn btn-primaire mt">Enregistrer</button></form>
+    </div>
+
+    <div class="carte"><h2>Réservations à venir</h2>
+      <table class="tableau"><tbody>{% for rv in reservations %}
+        <tr><td>{{ rv.date|date:"D d/m" }} {{ rv.heure|time:"H:i" }}<div class="muted petit">{{ rv.coach|default:"" }} {{ rv.note }}</div></td>
+          <td class="droite"><span class="badge {% if rv.statut == 'ABSENT' %}danger{% elif rv.statut == 'HONOREE' %}ok{% else %}info{% endif %}">{{ rv.get_statut_display }}</span></td></tr>
+      {% empty %}<tr><td class="vide">Aucune.</td></tr>{% endfor %}</tbody></table>
+      {% if not user.est_coach %}
+      <details class="repli"><summary>Réserver une séance</summary>
+        <form method="post" action="{% url 'client_reservation' client.pk %}">{% csrf_token %}
+          <div class="form-grille">{% include "gym/_champs.html" with form=resa_form %}</div>
+          <button class="btn btn-primaire mt">Réserver</button></form></details>{% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

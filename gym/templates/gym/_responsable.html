@@ -1,0 +1,8 @@
+{% if form.resp_identifiant %}
+<fieldset class="responsable"><legend>Validation par un responsable</legend>
+  <div class="form-grille">
+    <div class="ligne-champ"><label>{{ form.resp_identifiant.label }}</label>{{ form.resp_identifiant }}</div>
+    <div class="ligne-champ"><label>{{ form.resp_mot_de_passe.label }}</label>{{ form.resp_mot_de_passe }}</div>
+  </div>
+</fieldset>
+{% endif %}

@@ -1,0 +1,15 @@
+{% extends "gym/base.html" %}{% load gym_extras %}
+{% block titre %}Historique des opérations{% endblock %}
+{% block contenu %}
+<div class="entete-page"><div><h1>Historique des opérations</h1><div class="muted">Journal d'audit non modifiable : chaque opération importante avec son auteur, sa date et son poste.</div></div></div>
+<div class="carte">
+  <form class="barre-filtres"><input class="champ" name="q" value="{{ q }}" placeholder="Rechercher (client, n°, texte)">
+    <select class="champ" name="action"><option value="">Toutes les actions</option>{% for a in actions %}<option {% if a == action %}selected{% endif %}>{{ a }}</option>{% endfor %}</select>
+    <select class="champ" name="utilisateur"><option value="">Tous les utilisateurs</option>{% for u in utilisateurs %}<option value="{{ u.pk }}" {% if u.pk|stringformat:"s" == utilisateur_sel %}selected{% endif %}>{{ u }}</option>{% endfor %}</select>
+    <button class="btn btn-primaire">Filtrer</button></form>
+  <div class="table-wrap"><table class="tableau"><thead><tr><th>Date</th><th>Utilisateur</th><th>Action</th><th>Objet</th><th>Description</th><th class="cache-mobile">Poste</th></tr></thead><tbody>
+  {% for j in page %}<tr><td class="nowrap">{{ j.date|dateheure }}</td><td>{{ j.utilisateur|default:"Système" }}</td><td><span class="badge neutre">{{ j.action }}</span></td><td class="nowrap">{{ j.objet }}</td><td class="petit">{{ j.description }}</td><td class="cache-mobile muted petit">{{ j.adresse_ip|default:"" }}</td></tr>
+  {% empty %}<tr><td colspan="6" class="vide">Aucune opération.</td></tr>{% endfor %}</tbody></table></div>
+  {% include "gym/_pagination.html" %}
+</div>
+{% endblock %}

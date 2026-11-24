@@ -1,0 +1,4 @@
+<div class="ligne-champ{% if f.widget_type == 'checkbox' %} check-ligne{% endif %}">
+  {% if f.widget_type == 'checkbox' %}{{ f }} <label for="{{ f.id_for_label }}">{{ f.label }}</label>{% else %}<label for="{{ f.id_for_label }}">{{ f.label }}{% if f.field.required %} *{% endif %}</label>{{ f }}{% endif %}
+  {% if f.help_text %}<div class="aide">{{ f.help_text }}</div>{% endif %}{% for e in f.errors %}<div class="erreur">{{ e }}</div>{% endfor %}
+</div>

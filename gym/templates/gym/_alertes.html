@@ -1,0 +1,33 @@
+{% load gym_extras %}
+<div class="carte" style="padding:14px">
+  <div class="entete-page" style="margin-bottom:10px"><h2 style="margin:0">Alertes</h2>
+    {% if nb_alertes == 0 %}<span class="badge ok">Aucune alerte en cours</span>{% else %}<span class="badge danger">{{ nb_alertes }} point(s) d'attention</span>{% endif %}</div>
+  <div class="grille g3">
+    <div class="alerte-bloc info"><h4><span class="point-vert"></span> Clients présents <span class="compteur">{{ al.presents|length }}</span></h4>
+      <ul>{% for p in al.presents|slice:":6" %}<li><a href="{% url 'presences' %}?client={{ p.client.pk }}">{{ p.client.nom_complet }}</a> — depuis {{ p.heure_entree|heure }}</li>{% empty %}<li class="muted">Personne en salle.</li>{% endfor %}
+      {% if al.presents|length > 6 %}<li><a href="{% url 'presences' %}">… voir tous</a></li>{% endif %}</ul></div>
+
+    <div class="alerte-bloc alerte"><h4>Abonnements à renouveler <span class="compteur">{{ al.a_renouveler|length }}</span></h4>
+      <ul>{% for a in al.a_renouveler|slice:":6" %}<li><a href="{% url 'client_detail' a.client.pk %}">{{ a.client.nom_complet }}</a> — fin le {{ a.date_fin|date:"d/m" }} ({{ a.jours_restants }} j)</li>{% empty %}<li class="muted">Aucun.</li>{% endfor %}
+      {% if al.a_renouveler|length > 6 %}<li><a href="{% url 'abonnements' %}?etat=a_renouveler">… voir tous</a></li>{% endif %}</ul></div>
+
+    <div class="alerte-bloc danger"><h4>Abonnements expirés <span class="compteur">{{ al.expires|length }}</span></h4>
+      <ul>{% for a in al.expires|slice:":6" %}<li><a href="{% url 'client_detail' a.client.pk %}">{{ a.client.nom_complet }}</a> — depuis le {{ a.date_fin|date:"d/m/Y" }}</li>{% empty %}<li class="muted">Aucun.</li>{% endfor %}
+      {% if al.expires|length > 6 %}<li><a href="{% url 'abonnements' %}?etat=expires">… voir tous</a></li>{% endif %}</ul></div>
+
+    <div class="alerte-bloc danger"><h4>Quota hebdomadaire épuisé <span class="compteur">{{ al.quota_epuise|length }}</span></h4>
+      <ul>{% for a, d in al.quota_epuise|slice:":6" %}<li><a href="{% url 'client_detail' a.client.pk %}">{{ a.client.nom_complet }}</a> — jusqu'au {{ d.courante.fin|date:"d/m" }}</li>{% empty %}<li class="muted">Aucun.</li>{% endfor %}</ul></div>
+
+    <div class="alerte-bloc alerte"><h4>Dernière(s) séance(s) de la semaine <span class="compteur">{{ al.derniere_seance|length }}</span></h4>
+      <ul>{% for a, d in al.derniere_seance|slice:":6" %}<li><a href="{% url 'client_detail' a.client.pk %}">{{ a.client.nom_complet }}</a> — reste {{ d.courante.restantes }}</li>{% empty %}<li class="muted">Aucun.</li>{% endfor %}</ul></div>
+
+    <div class="alerte-bloc danger"><h4>Dépassements horaires <span class="compteur">{{ al.depassements|length }}</span></h4>
+      <ul>{% for p in al.depassements|slice:":6" %}<li><a href="{% url 'presences' %}?client={{ p.client.pk }}">{{ p.client.nom_complet }}</a> —
+        {% if p.statut == "EN_COURS" %}<b>en cours : +{{ p.depassement_en_cours }} min</b>{% else %}+{{ p.depassement_minutes }} min{% if p.supplement %} ({{ p.supplement|fcfa }}){% endif %}{% endif %}</li>{% empty %}<li class="muted">Aucun.</li>{% endfor %}</ul></div>
+  </div>
+  {% if al.paiements_attente %}
+  <div class="alerte-bloc danger mt"><h4>Paiements en attente <span class="compteur">{{ al.paiements_attente|length }}</span></h4>
+    <ul>{% for t in al.paiements_attente|slice:":8" %}<li><a href="{% url 'transaction' t.pk %}">{{ t.client.nom_complet }}</a> — {{ t.designation|truncatechars:60 }} : reste <b>{{ t.reste|fcfa }}</b></li>{% endfor %}
+    {% if al.paiements_attente|length > 8 %}<li><a href="{% url 'paiements' %}?filtre=impayees">… voir tous</a></li>{% endif %}</ul></div>
+  {% endif %}
+</div>

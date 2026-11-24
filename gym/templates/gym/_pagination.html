@@ -1,0 +1,7 @@
+{% if page.paginator.num_pages > 1 %}
+<div class="pagination">
+  {% if page.has_previous %}<a class="btn btn-petit" href="?{% for k,v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v|urlencode }}&{% endif %}{% endfor %}page={{ page.previous_page_number }}">← Précédent</a>{% endif %}
+  <span class="muted petit">Page {{ page.number }} / {{ page.paginator.num_pages }} · {{ page.paginator.count }} élément(s)</span>
+  {% if page.has_next %}<a class="btn btn-petit" href="?{% for k,v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v|urlencode }}&{% endif %}{% endfor %}page={{ page.next_page_number }}">Suivant →</a>{% endif %}
+</div>
+{% endif %}

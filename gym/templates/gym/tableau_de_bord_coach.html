@@ -1,0 +1,18 @@
+{% extends "gym/base.html" %}{% load gym_extras %}
+{% block titre %}Tableau de bord{% endblock %}
+{% block contenu %}
+<div class="entete-page"><div><h1>Bonjour {{ user.first_name|default:user.username }}</h1><div class="muted">{{ jour|date:"l j F Y"|capfirst }} · espace coach</div></div>
+  <div class="actions"><a class="btn btn-primaire" href="{% url 'mon_espace' %}">{% icone 'award' %} Mon espace coach</a></div></div>
+<div class="grille g3">
+  <a class="kpi accent" href="{% url 'clients' %}"><div class="lib">Mes clients</div><div class="val">{{ mes_clients }}</div></a>
+  <div class="kpi"><div class="lib"><span class="point-vert"></span>Mes clients présents</div><div class="val">{{ presents|length }}</div></div>
+  <div class="kpi"><div class="lib">Séances aujourd'hui</div><div class="val">{{ seances_jour }}</div></div>
+</div>
+<div class="carte mt"><h2>En salle maintenant</h2>
+  <table class="tableau"><thead><tr><th>Client</th><th>Arrivée</th><th>Durée</th><th></th></tr></thead><tbody>
+  {% for p in presents %}<tr><td><b>{{ p.client.nom_complet }}</b></td><td>{{ p.heure_entree|heure }}</td><td>{{ p.duree_actuelle|duree }}</td>
+    <td class="droite"><a class="btn btn-petit" href="{% url 'client_detail' p.client.pk %}">Ajouter une observation</a></td></tr>
+  {% empty %}<tr><td colspan="4" class="vide">Aucun de vos clients n'est en salle.</td></tr>{% endfor %}
+  </tbody></table>
+</div>
+{% endblock %}

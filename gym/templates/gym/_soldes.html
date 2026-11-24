@@ -1,0 +1,25 @@
+{% load gym_extras %}{# Attend : r (résumé client) #}
+{% with abo=r.abonnement d=r.droits %}
+{% if abo %}
+<div class="muted petit">{{ abo.designation }} · du {{ abo.date_debut|date:"d/m/Y" }} au {{ abo.date_fin|date:"d/m/Y" }}
+  · <span class="badge {% etat_badge abo.etat %}">{{ abo.etat_libelle }}</span>
+  {% if abo.etat == "ACTIF" and abo.est_mensuel %}· {{ abo.jours_restants }} jour(s) restant(s){% endif %}</div>
+{% if d and abo.etat != "EXPIRE" and abo.etat != "ANNULE" %}
+  {% if d.illimite %}
+  <div class="soldes"><div class="solde"><div class="n">∞</div><div class="l">Accès illimité</div></div>
+    <div class="solde"><div class="n">{{ d.total_utilisees }}</div><div class="l">Séances consommées</div></div>
+    <div class="solde"><div class="n">{{ abo.jours_restants }}</div><div class="l">Jours restants</div></div></div>
+  {% elif abo.est_mensuel %}
+  <div class="soldes">
+    <div class="solde"><div class="n">{{ d.courante.autorisees|default:"0" }}</div><div class="l">Autorisées cette semaine</div></div>
+    <div class="solde"><div class="n">{{ d.courante.utilisees|default:"0" }}</div><div class="l">Consommées</div></div>
+    <div class="solde {% if not d.courante.restantes %}zero{% endif %}"><div class="n">{{ d.courante.restantes|default:"0" }}</div><div class="l">Restantes</div></div>
+  </div>
+  <div class="muted petit">Sur toute la période : {{ d.total_utilisees }} consommée(s) / {{ d.total_droits }} autorisée(s) — <b>{{ d.total_restantes }} restante(s)</b>{% if d.courante %} · semaine {{ d.courante.numero }} du {{ d.courante.debut|date:"d/m" }} au {{ d.courante.fin|date:"d/m" }}{% endif %}</div>
+  {% else %}
+  <div class="soldes"><div class="solde {% if d.total_restantes == 0 %}zero{% endif %}"><div class="n">{{ d.total_restantes }}</div><div class="l">Séance restante</div></div>
+    {% if abo.est_horaire %}<div class="solde"><div class="n">{{ abo.duree_minutes|duree }}</div><div class="l">Durée autorisée</div></div>{% endif %}</div>
+  {% endif %}
+{% endif %}
+{% else %}<p class="muted">Aucun abonnement.</p>{% endif %}
+{% endwith %}

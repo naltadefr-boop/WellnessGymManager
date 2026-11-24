@@ -1,0 +1,10 @@
+{% load gym_extras %}
+{% if anciennes %}<div class="msg warning">Sortie non enregistrée pour : {% for p in anciennes %}<b>{{ p.client.nom_complet }}</b> (entré le {{ p.heure_entree|dateheure }}){% if not forloop.last %}, {% endif %}{% endfor %}. Pensez à pointer leur sortie.</div>{% endif %}
+<div class="table-wrap"><table class="tableau">
+<thead><tr><th>Client</th><th>Formule</th><th>Arrivée</th><th>Départ</th><th>Durée</th><th class="cache-mobile">Solde semaine</th><th>Statut</th><th></th></tr></thead>
+<tbody>
+{% for p in anciennes %}{% include "gym/presences/_ligne.html" %}{% endfor %}
+{% for p in en_cours %}{% include "gym/presences/_ligne.html" %}{% endfor %}
+{% for p in autres %}{% include "gym/presences/_ligne.html" %}{% endfor %}
+{% if not en_cours and not autres and not anciennes %}<tr><td colspan="8" class="vide">Aucun passage enregistré aujourd'hui.</td></tr>{% endif %}
+</tbody></table></div>

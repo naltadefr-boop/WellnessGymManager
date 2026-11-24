@@ -1,0 +1,9 @@
+Django==5.1.4
+waitress>=3.0
+whitenoise>=6.6
+reportlab>=4.2
+openpyxl>=3.1
+qrcode>=7.4
+pillow>=10.0
+# Base centralisée PostgreSQL (facultatif) : décommentez la ligne suivante
+# psycopg[binary]>=3.2

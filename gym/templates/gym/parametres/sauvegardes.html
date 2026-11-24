@@ -1,0 +1,23 @@
+{% extends "gym/base.html" %}{% load gym_extras %}
+{% block titre %}Sauvegardes{% endblock %}
+{% block contenu %}
+<div class="entete-page"><div><h1>Sauvegardes et restauration</h1><div class="muted">Dossier : <code>{{ dossier }}</code> · dernière sauvegarde : {{ params.derniere_sauvegarde|dateheure }}
+  {% if params.sauvegarde_auto %}· automatique toutes les {{ params.sauvegarde_intervalle_heures }} h{% else %}· <b>sauvegarde automatique désactivée</b>{% endif %}</div></div>
+  {% if sqlite %}<form method="post">{% csrf_token %}<input type="hidden" name="action" value="creer"><button class="btn btn-primaire">{% icone 'save' %} Sauvegarder maintenant</button></form>{% endif %}</div>
+{% if not sqlite %}<div class="msg warning">Base PostgreSQL : utilisez pg_dump / pg_restore (voir la documentation d'installation).</div>{% endif %}
+<div class="carte"><h2>Sauvegardes disponibles</h2>
+  <p class="muted petit">Pour une copie sur clé USB ou disque externe : téléchargez le fichier, ou indiquez un dossier de copie automatique dans les Paramètres.</p>
+  <table class="tableau"><thead><tr><th>Fichier</th><th>Date</th><th>Type</th><th>Taille</th><th></th></tr></thead><tbody>
+  {% for s in sauvegardes %}<tr><td><b>{{ s.nom }}</b></td><td>{{ s.date|dateheure }}</td><td><span class="badge {% if s.auto %}info{% elif s.type == 'Manuelle' %}or{% else %}alerte{% endif %}">{{ s.type }}</span></td><td>{{ s.taille|filesizeformat }}</td>
+    <td class="droite nowrap"><a class="btn btn-petit" href="{% url 'sauvegarde_telecharger' s.nom %}">Télécharger</a>
+      <details class="repli" style="display:inline-block;margin:0;padding:4px 8px"><summary class="petit">Restaurer</summary>
+        <form method="post">{% csrf_token %}<input type="hidden" name="action" value="restaurer"><input type="hidden" name="nom" value="{{ s.nom }}">
+          <p class="petit">Remplace TOUTES les données actuelles par celles du {{ s.date|dateheure }}. L'état actuel sera d'abord sauvegardé.</p>
+          <input class="champ" name="confirmation" placeholder="Tapez RESTAURER" required><button class="btn btn-petit btn-danger mt">Restaurer</button></form></details></td></tr>
+  {% empty %}<tr><td colspan="5" class="vide">Aucune sauvegarde pour l'instant.</td></tr>{% endfor %}</tbody></table>
+</div>
+{% if sqlite %}<div class="carte"><h2>Restaurer depuis un fichier (clé USB…)</h2>
+  <form method="post" enctype="multipart/form-data" class="barre-filtres">{% csrf_token %}<input type="hidden" name="action" value="restaurer">
+    <input class="champ" type="file" name="fichier" accept=".zip" required><input class="champ" name="confirmation" placeholder="Tapez RESTAURER" required>
+    <button class="btn btn-danger">Restaurer ce fichier</button></form></div>{% endif %}
+{% endblock %}

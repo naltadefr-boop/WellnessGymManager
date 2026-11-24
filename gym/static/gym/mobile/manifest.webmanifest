@@ -1,0 +1,17 @@
+{
+  "name": "Wellness Gym — WELLNESS HOTEL",
+  "short_name": "Wellness Gym",
+  "description": "Pointage, clients et abonnements de la salle de sport WELLNESS HOTEL.",
+  "lang": "fr",
+  "start_url": "./#/accueil",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0F3D36",
+  "theme_color": "#0F3D36",
+  "icons": [
+    {"src": "icone-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icone-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icone-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}

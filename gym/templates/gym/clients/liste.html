@@ -1,0 +1,37 @@
+{% extends "gym/base.html" %}{% load gym_extras %}
+{% block titre %}Clients{% endblock %}
+{% block contenu %}
+<div class="entete-page"><h1>Gestion des clients</h1>
+  {% if not user.est_coach %}<div class="actions"><a class="btn btn-or" href="{% url 'client_nouveau' %}">{% icone 'plus' %} Nouveau client</a></div>{% endif %}</div>
+<div class="carte">
+  <form class="barre-filtres" method="get">
+    <input class="champ" name="q" value="{{ q }}" placeholder="Nom, prénom, téléphone, identifiant…" style="min-width:300px" autofocus>
+    <select class="champ" name="filtre" onchange="this.form.submit()">
+      <option value="tous" {% if filtre == "tous" %}selected{% endif %}>Tous les clients</option>
+      <option value="actifs" {% if filtre == "actifs" %}selected{% endif %}>Abonnement valide aujourd'hui</option>
+      <option value="presents" {% if filtre == "presents" %}selected{% endif %}>Présents en salle</option>
+      <option value="inactifs" {% if filtre == "inactifs" %}selected{% endif %}>Fiches archivées</option>
+    </select>
+    <button class="btn btn-primaire">Rechercher</button>
+  </form>
+  <div class="table-wrap"><table class="tableau">
+    <thead><tr><th>Identifiant</th><th>Client</th><th class="cache-mobile">Téléphone</th><th>Formule en cours</th><th>Fin</th><th>Solde semaine</th><th>Statut</th><th></th></tr></thead>
+    <tbody>
+    {% for l in lignes %}{% with c=l.c abo=l.abo %}
+    <tr{% if l.present %} class="surligne"{% endif %}>
+      <td class="nowrap"><b>{{ c.identifiant }}</b></td>
+      <td><a href="{% url 'client_detail' c.pk %}"><b>{{ c.nom_complet }}</b></a>{% if not c.actif %} <span class="badge neutre">archivé</span>{% endif %}
+        {% if c.coach %}<div class="muted petit">Coach : {{ c.coach }}</div>{% endif %}</td>
+      <td class="cache-mobile nowrap">{{ c.telephone }}</td>
+      <td>{{ abo.designation|default:"—" }}</td>
+      <td class="nowrap">{{ abo.date_fin|date:"d/m/Y"|default:"—" }}</td>
+      <td>{% if l.droits %}{% if l.droits.illimite %}illimité{% elif abo.est_mensuel %}<b>{{ l.droits.courante.restantes }}</b> / {{ l.droits.courante.autorisees }}{% else %}{{ l.droits.total_restantes }}{% endif %}{% else %}—{% endif %}</td>
+      <td>{% if l.present %}<span class="badge info"><span class="point-vert"></span>Présent</span>{% elif abo %}<span class="badge {% etat_badge abo.etat %}">{{ abo.etat_libelle }}</span>{% else %}<span class="badge neutre">Sans abonnement</span>{% endif %}</td>
+      <td class="droite nowrap">{% if not user.est_coach %}<a class="btn btn-petit" href="{% url 'presences' %}?client={{ c.pk }}">Pointer</a>{% endif %}
+        <a class="btn btn-petit" href="{% url 'client_detail' c.pk %}">Fiche</a></td>
+    </tr>{% endwith %}
+    {% empty %}<tr><td colspan="8" class="vide">Aucun client trouvé.</td></tr>{% endfor %}
+    </tbody></table></div>
+  {% include "gym/_pagination.html" %}
+</div>
+{% endblock %}

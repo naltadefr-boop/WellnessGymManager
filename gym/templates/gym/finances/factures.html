@@ -1,0 +1,18 @@
+{% extends "gym/base.html" %}{% load gym_extras %}
+{% block titre %}Factures{% endblock %}
+{% block contenu %}
+<div class="entete-page"><h1>Factures</h1></div>
+<div class="carte">
+  <form class="barre-filtres" method="get"><input class="champ" name="q" value="{{ q }}" placeholder="N° de facture, transaction ou client" style="min-width:300px"><button class="btn btn-primaire">Rechercher</button></form>
+  <div class="table-wrap"><table class="tableau">
+    <thead><tr><th>Facture</th><th>Date</th><th>Client</th><th>Objet</th><th class="droite">Montant</th><th>Statut</th><th class="cache-mobile">Éditée par</th><th></th></tr></thead>
+    <tbody>{% for f in page %}{% with t=f.transaction %}
+      <tr><td class="nowrap"><b>{{ f.numero }}</b></td><td class="nowrap">{{ f.date_emission|dateheure }}</td><td>{{ t.client.nom_complet }}</td>
+        <td class="petit">{{ t.designation|truncatechars:55 }}</td><td class="droite nowrap">{{ t.montant_du|fcfa }}</td>
+        <td>{% if t.statut == "ANNULEE" %}<span class="badge neutre">Annulée</span>{% elif t.reste %}<span class="badge danger">Reste {{ t.reste|fcfa }}</span>{% else %}<span class="badge ok">Payée</span>{% endif %}</td>
+        <td class="cache-mobile">{{ f.emise_par|default:"—" }}</td>
+        <td class="droite nowrap"><a class="btn btn-petit btn-primaire" href="{% url 'facture_pdf' f.pk %}" target="_blank">Imprimer</a> <a class="btn btn-petit" href="{% url 'transaction' t.pk %}">Détail</a></td></tr>{% endwith %}
+    {% empty %}<tr><td colspan="8" class="vide">Aucune facture.</td></tr>{% endfor %}</tbody></table></div>
+  {% include "gym/_pagination.html" %}
+</div>
+{% endblock %}

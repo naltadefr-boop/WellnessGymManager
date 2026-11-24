@@ -1,0 +1,24 @@
+{% extends "gym/base.html" %}{% load gym_extras %}
+{% block titre %}{{ coach }}{% endblock %}
+{% block contenu %}
+<div class="entete-page"><div><h1>{{ coach }}</h1><div class="muted">{{ coach.fonction }} · {{ coach.telephone }} · <span class="badge {% if coach.statut == 'ACTIF' %}ok{% else %}neutre{% endif %}">{{ coach.get_statut_display }}</span></div></div>
+  {% if user.est_admin %}<a class="btn" href="{% url 'coach_modifier' coach.pk %}">Modifier</a>{% endif %}</div>
+<div class="grille g4 mb">
+  <div class="kpi accent"><div class="lib">Séances encadrées</div><div class="val">{{ nb_total }}</div></div>
+  <div class="kpi"><div class="lib">Ce mois</div><div class="val">{{ nb_mois }}</div></div>
+  <div class="kpi"><div class="lib">Clients suivis</div><div class="val">{{ nb_clients_suivis }}</div></div>
+  <div class="kpi"><div class="lib">Clients attitrés</div><div class="val">{{ clients|length }}</div></div>
+</div>
+<div class="grille g2">
+  <div class="carte"><h2>Clients attitrés</h2><table class="tableau"><tbody>{% for c in clients %}
+    <tr><td><a href="{% url 'client_detail' c.pk %}">{{ c.nom_complet }}</a></td><td class="muted">{{ c.identifiant }}</td></tr>
+    {% empty %}<tr><td class="vide">Aucun.</td></tr>{% endfor %}</tbody></table></div>
+  <div class="carte"><h2>Observations et recommandations</h2><ul class="chrono">{% for o in observations %}
+    <li><span class="d">{{ o.date|dateheure }}</span><span>{% if o.type == "INCIDENT" %}⚠{% else %}•{% endif %}</span><span><b>{{ o.client.nom_complet }}</b> — {{ o.get_type_display }} : {{ o.texte }}</span></li>
+    {% empty %}<li class="muted">Aucune.</li>{% endfor %}</ul></div>
+</div>
+<div class="carte"><h2>Dernières séances encadrées</h2><table class="tableau">
+  <thead><tr><th>Date</th><th>Client</th><th>Arrivée</th><th>Départ</th><th>Durée</th></tr></thead><tbody>
+  {% for p in seances %}<tr><td>{{ p.date|date:"d/m/Y" }}</td><td>{{ p.client.nom_complet }}</td><td>{{ p.heure_entree|heure }}</td><td>{{ p.heure_sortie|heure }}</td><td>{{ p.duree_minutes|duree }}</td></tr>
+  {% empty %}<tr><td colspan="5" class="vide">Aucune séance.</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

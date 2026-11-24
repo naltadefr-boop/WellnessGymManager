@@ -1,0 +1,14 @@
+{% extends "gym/base.html" %}{% load gym_extras %}
+{% block titre %}Rapports{% endblock %}
+{% block contenu %}
+<div class="entete-page"><div><h1>Rapports</h1><div class="muted">Chaque rapport peut être filtré (dates, client, réceptionniste, coach, formule) et exporté en PDF ou Excel.</div></div></div>
+<div class="grille g3 mb">
+  <a class="kpi accent" href="{% url 'rapport' 'presences' %}?periode=jour"><div class="lib">Rapport journalier</div><div class="val" style="font-size:1.1rem">Présences du jour</div></a>
+  <a class="kpi accent" href="{% url 'rapport' 'synthese' %}?periode=semaine"><div class="lib">Rapport hebdomadaire</div><div class="val" style="font-size:1.1rem">Synthèse de la semaine</div></a>
+  <a class="kpi accent" href="{% url 'rapport' 'synthese' %}?periode=mois"><div class="lib">Rapport mensuel</div><div class="val" style="font-size:1.1rem">Synthèse du mois</div></a>
+</div>
+<div class="carte"><table class="tableau"><thead><tr><th>Rapport</th><th>Contenu</th><th></th></tr></thead><tbody>
+{% for code, r in rapports.items %}<tr><td><a href="{% url 'rapport' code %}"><b>{{ r.0 }}</b></a></td><td class="muted">{{ r.2 }}</td>
+  <td class="droite nowrap"><a class="btn btn-petit btn-primaire" href="{% url 'rapport' code %}">Ouvrir</a> <a class="btn btn-petit" href="{% url 'rapport' code %}?format=pdf" target="_blank">PDF</a> <a class="btn btn-petit" href="{% url 'rapport' code %}?format=xlsx">Excel</a></td></tr>{% endfor %}
+</tbody></table></div>
+{% endblock %}

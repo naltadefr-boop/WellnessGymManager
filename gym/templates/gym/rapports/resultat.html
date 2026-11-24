@@ -1,0 +1,22 @@
+{% extends "gym/base.html" %}
+{% block titre %}{{ res.titre }}{% endblock %}
+{% block contenu %}
+<div class="entete-page"><div><h1>{{ res.titre }}</h1><div class="muted">{{ res.sous_titre }}</div></div>
+  <div class="actions"><a class="btn btn-primaire" href="?{{ query }}&format=pdf" target="_blank">Exporter en PDF</a><a class="btn btn-or" href="?{{ query }}&format=xlsx">Exporter en Excel</a><a class="btn" href="{% url 'rapports' %}">← Rapports</a></div></div>
+<div class="carte no-print">
+  <form method="get" class="form-grille" style="grid-template-columns:repeat(auto-fill,minmax(180px,1fr))">
+    {% for f in form %}<div class="ligne-champ"><label>{{ f.label }}</label>{{ f }}</div>{% endfor %}
+    <div class="ligne-champ" style="align-self:end"><button class="btn btn-primaire" style="width:100%">Appliquer</button></div>
+  </form>
+  <div class="barre-filtres mt" style="margin-bottom:0"><span class="muted petit">Période rapide :</span>
+    <a class="btn btn-petit" href="?periode=jour">Aujourd'hui</a><a class="btn btn-petit" href="?periode=semaine">Cette semaine</a><a class="btn btn-petit" href="?periode=mois">Ce mois</a><a class="btn btn-petit" href="?periode=mois_precedent">Mois précédent</a></div>
+</div>
+<div class="carte">
+  {% if res.resume %}<div class="msg info">{{ res.resume }}</div>{% endif %}
+  <div class="table-wrap"><table class="tableau rapport">
+    <thead><tr>{% for c in res.colonnes %}<th>{{ c }}</th>{% endfor %}</tr></thead>
+    <tbody>{% for l in res.lignes %}<tr>{% for v in l %}<td>{{ v }}</td>{% endfor %}</tr>{% empty %}<tr><td colspan="{{ res.colonnes|length }}" class="vide">Aucune donnée pour ces critères.</td></tr>{% endfor %}</tbody>
+    {% if res.totaux %}<tfoot><tr>{% for v in res.totaux %}<td>{{ v }}</td>{% endfor %}</tr></tfoot>{% endif %}
+  </table></div>
+</div>
+{% endblock %}

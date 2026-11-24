@@ -1,0 +1,82 @@
+{% extends "gym/base.html" %}{% load gym_extras %}
+{% block titre %}{{ tx.numero }}{% endblock %}
+{% block contenu %}
+<div class="entete-page">
+  <div><h1>Facture {{ tx.facture.numero }}</h1><div class="muted">Transaction {{ tx.numero }} · {{ tx.cree_le|dateheure }} · par {{ tx.cree_par|default:"—" }}</div></div>
+  <div class="actions"><a class="btn" href="{% url 'client_detail' tx.client.pk %}">← Fiche de {{ tx.client.prenom }}</a></div>
+</div>
+{% if nouvelle %}<div class="msg success" style="font-size:1.05rem">Opération enregistrée. Remettez la facture au client : imprimez-la, enregistrez-la en PDF ou partagez-la.</div>{% endif %}
+
+<div class="grille g-3-2">
+  <div>
+    <div class="carte">
+      <div class="entete-page" style="margin-bottom:8px"><h2 style="margin:0">{{ tx.get_type_display }}</h2>
+        {% if tx.statut == "ANNULEE" %}<span class="badge neutre">ANNULÉE</span>{% elif not tx.reste %}<span class="badge ok">PAYÉE</span>{% elif tx.montant_paye %}<span class="badge alerte">PARTIELLEMENT PAYÉE</span>{% else %}<span class="badge danger">EN ATTENTE DE PAIEMENT</span>{% endif %}</div>
+      <p><b>{{ tx.client.nom_complet }}</b> · {{ tx.client.identifiant }} · {{ tx.client.telephone }}</p>
+      <p>{{ tx.designation }}</p>
+      <div class="soldes">
+        <div class="solde"><div class="n" style="font-size:1.25rem">{{ tx.montant_du|fcfa }}</div><div class="l">Montant total</div></div>
+        <div class="solde"><div class="n" style="font-size:1.25rem">{{ tx.montant_paye|fcfa }}</div><div class="l">Payé</div></div>
+        <div class="solde {% if tx.reste %}zero{% endif %}"><div class="n" style="font-size:1.25rem">{{ tx.reste|fcfa }}</div><div class="l">Reste à payer</div></div>
+      </div>
+      {% if tx.montant_rembourse %}<div class="msg info">Remboursé : {{ tx.montant_rembourse|fcfa }}</div>{% endif %}
+      {% if tx.statut == "ANNULEE" %}<div class="msg danger">Annulée le {{ tx.annulee_le|dateheure }} par {{ tx.annulee_par }} — motif : {{ tx.motif_annulation }}</div>{% endif %}
+      <div class="actions mt" style="display:flex;gap:8px;flex-wrap:wrap">
+        <a class="btn btn-primaire" href="{% url 'facture_pdf' tx.facture.pk %}" target="_blank">{% icone 'file' %} Imprimer la facture</a>
+        <a class="btn" href="{% url 'facture_pdf' tx.facture.pk %}?telecharger=1">Enregistrer en PDF</a>
+        <a class="btn" href="{{ whatsapp }}" target="_blank" title="Ouvre WhatsApp avec le message ; joignez le PDF téléchargé">WhatsApp</a>
+      </div>
+      <details class="repli"><summary>Envoyer par e-mail</summary>
+        <form method="post" action="{% url 'facture_email' tx.facture.pk %}" class="barre-filtres mt">{% csrf_token %}
+          <input class="champ" type="email" name="email" value="{{ tx.client.email }}" placeholder="adresse@exemple.com" required>
+          <button class="btn btn-primaire">Envoyer la facture</button></form>
+        <p class="muted petit">Pour WhatsApp : téléchargez le PDF, puis cliquez sur « WhatsApp » et joignez le fichier dans la conversation.</p>
+      </details>
+    </div>
+
+    <div class="carte"><h2>Encaissements</h2>
+      <table class="tableau"><thead><tr><th>Reçu</th><th>Date</th><th>Mode</th><th class="droite">Montant</th><th>Par</th><th></th></tr></thead><tbody>
+      {% for r in reglements %}<tr{% if r.annule %} class="danger"{% endif %}><td>{{ r.numero }}</td><td>{{ r.date|dateheure }}</td><td>{{ r.mode }}{% if r.reference %}<div class="muted petit">{{ r.reference }}</div>{% endif %}</td>
+        <td class="droite">{{ r.montant|fcfa }}{% if r.annule %}<div class="badge neutre">annulé : {{ r.motif_annulation }}</div>{% endif %}</td><td>{{ r.recu_par }}</td>
+        <td class="droite nowrap"><a class="btn btn-petit" href="{% url 'recu_pdf' r.pk %}" target="_blank">Reçu</a>
+          {% if not r.annule %}<details class="repli" style="display:inline-block;margin:0;padding:4px 8px"><summary class="petit">Annuler</summary>
+            <form method="post" action="{% url 'reglement_annuler' r.pk %}" data-confirm="Annuler l'encaissement {{ r.numero }} ? L'opération restera visible dans l'historique.">{% csrf_token %}
+              <input class="champ mt" name="ar{{ r.pk }}-motif" placeholder="Motif (erreur de saisie…)" required>
+              {% if not user.est_admin %}<input class="champ mt" name="ar{{ r.pk }}-resp_identifiant" placeholder="Identifiant responsable"><input class="champ mt" type="password" name="ar{{ r.pk }}-resp_mot_de_passe" placeholder="Mot de passe responsable">{% endif %}
+              <button class="btn btn-petit btn-danger mt">Confirmer</button></form></details>{% endif %}</td></tr>
+      {% empty %}<tr><td colspan="6" class="vide">Aucun encaissement.</td></tr>{% endfor %}
+      {% for r in remboursements %}<tr class="alerte"><td>{{ r.numero }}</td><td>{{ r.date|dateheure }}</td><td>{{ r.mode }}</td><td class="droite">– {{ r.montant|fcfa }}</td><td colspan="2" class="petit">Remboursement autorisé par {{ r.autorise_par }} : {{ r.motif }}</td></tr>{% endfor %}
+      </tbody></table>
+    </div>
+  </div>
+
+  <div>
+    {% if tx.statut != "ANNULEE" and tx.reste %}
+    <div class="carte" style="border-top:3px solid var(--or)"><h2>Encaisser</h2>
+      <form method="post" action="{% url 'encaisser' tx.pk %}" data-confirm="Confirmer l'encaissement ?" data-confirm-titre="Encaissement">{% csrf_token %}
+        <div class="form-grille" style="grid-template-columns:1fr">{% include "gym/_champs.html" with form=enc_form %}</div>
+        <button class="btn btn-primaire mt" style="width:100%">Enregistrer le paiement</button></form>
+    </div>{% endif %}
+
+    {% if tx.statut != "ANNULEE" %}
+    <div class="carte"><h2>Corrections</h2>
+      <p class="muted petit">Aucune opération n'est supprimée : chaque correction est tracée avec son motif et le responsable qui l'a autorisée.</p>
+      {% if tx.net_encaisse %}
+      <details class="repli"><summary>Rembourser le client</summary>
+        <form method="post" action="{% url 'rembourser' tx.pk %}" data-confirm="Enregistrer ce remboursement ?">{% csrf_token %}
+          {% with form=rmb_form %}<div class="form-grille" style="grid-template-columns:1fr">
+            {% for f in form %}{% if f.name != "resp_identifiant" and f.name != "resp_mot_de_passe" %}
+            <div class="ligne-champ{% if f.widget_type == 'checkbox' %} check-ligne{% endif %}">{% if f.widget_type == 'checkbox' %}{{ f }} <label>{{ f.label }}</label>{% else %}<label>{{ f.label }}</label>{{ f }}{% endif %}</div>{% endif %}{% endfor %}</div>
+          {% include "gym/_responsable.html" %}{% endwith %}
+          <button class="btn btn-danger mt">Enregistrer le remboursement</button></form></details>
+      {% endif %}
+      <details class="repli"><summary>Annuler la transaction</summary>
+        {% if tx.net_encaisse %}<p class="msg warning petit">{{ tx.net_encaisse|fcfa }} ont été encaissés : remboursez ou annulez d'abord l'encaissement erroné.</p>{% endif %}
+        <form method="post" action="{% url 'transaction_annuler' tx.pk %}" data-confirm="Annuler définitivement la transaction {{ tx.numero }} ? L'abonnement associé sera annulé.">{% csrf_token %}
+          {% with form=annul_form %}<div class="ligne-champ"><label>{{ form.motif.label }}</label>{{ form.motif }}</div>{% include "gym/_responsable.html" %}{% endwith %}
+          <button class="btn btn-danger mt">Annuler la transaction</button></form></details>
+    </div>{% endif %}
+    {% if tx.abonnement %}<div class="carte"><h2>Abonnement lié</h2><p>{{ tx.abonnement }}</p><span class="badge {% etat_badge tx.abonnement.etat %}">{{ tx.abonnement.etat_libelle }}</span></div>{% endif %}
+  </div>
+</div>
+{% endblock %}

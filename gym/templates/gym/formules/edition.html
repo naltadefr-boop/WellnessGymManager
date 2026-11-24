@@ -1,0 +1,15 @@
+{% extends "gym/base.html" %}
+{% block titre %}Formule{% endblock %}
+{% block contenu %}
+<div class="entete-page"><h1>{% if formule %}Modifier « {{ formule.nom }} »{% else %}Nouvelle formule{% endif %}</h1><a class="btn" href="{% url 'formules' %}">← Formules</a></div>
+<form method="post" class="carte" style="max-width:900px">{% csrf_token %}
+  <h3>Généralités</h3>
+  <div class="form-grille">{% for f in form %}{% if f.name in "nom type description prix actif" %}{% include "gym/_champ1.html" %}{% endif %}{% endfor %}</div>
+  <h3 class="mt">Abonnement mensuel</h3>
+  <div class="form-grille">{% for f in form %}{% if f.name in "duree_mois seances_par_semaine report_seances" %}{% include "gym/_champ1.html" %}{% endif %}{% endfor %}</div>
+  <h3 class="mt">Formule horaire</h3>
+  <div class="form-grille">{% for f in form %}{% if f.name in "duree_minutes tolerance_minutes tranche_depassement_minutes tarif_depassement" %}{% include "gym/_champ1.html" %}{% endif %}{% endfor %}</div>
+  {% if formule %}<p class="msg info mt">Les abonnements déjà vendus gardent leurs conditions d'origine. La modification sera inscrite dans l'historique des opérations.</p>{% endif %}
+  <button class="btn btn-primaire mt">Enregistrer</button>
+</form>
+{% endblock %}

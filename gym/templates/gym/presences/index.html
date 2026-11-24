@@ -1,0 +1,91 @@
+{% extends "gym/base.html" %}{% load gym_extras %}
+{% block titre %}Présences et pointages{% endblock %}
+{% block contenu %}
+<div class="entete-page"><div><h1>Présences et pointages</h1><div class="muted">Recherchez le client (ou scannez sa carte), vérifiez son droit d'accès, puis cliquez sur ENTRÉE ou SORTIE.</div></div>
+  <a class="btn" href="{% url 'reservations' %}">{% icone 'cal' %} Réservations</a></div>
+
+<div class="grille {% if panneau %}g2{% else %}g-3-2{% endif %}">
+  <div class="carte">
+    <form method="get" autocomplete="off">
+      <label class="gras" for="scan">Client</label>
+      <input id="scan" class="champ scan-input" name="q" value="{{ q }}" placeholder="Nom, téléphone, identifiant ou scan du QR code" {% if not panneau %}autofocus{% endif %}>
+    </form>
+    {% if q %}
+    <table class="tableau mt"><tbody>{% for x in resultats %}
+      <tr{% if x.present %} class="surligne"{% endif %}><td><b>{{ x.c.nom_complet }}</b><div class="muted petit">{{ x.c.identifiant }} · {{ x.c.telephone }}</div></td>
+        <td>{% if x.present %}<span class="badge info">Présent</span>{% elif x.abo %}<span class="badge {% etat_badge x.abo.etat %}">{{ x.abo.etat_libelle }}</span>{% else %}<span class="badge neutre">Sans abonnement</span>{% endif %}</td>
+        <td class="droite"><a class="btn btn-primaire btn-petit" href="?client={{ x.c.pk }}">Sélectionner</a></td></tr>
+    {% empty %}<tr><td class="vide">Aucun client trouvé. {% if not user.est_coach %}<a href="{% url 'client_nouveau' %}">Enregistrer un nouveau client</a>{% endif %}</td></tr>{% endfor %}</tbody></table>
+    {% elif not panneau %}
+    <p class="muted mt">Astuce : avec un lecteur de QR code USB, il suffit de scanner la carte de membre : la fiche s'ouvre automatiquement.</p>
+    {% endif %}
+  </div>
+
+  {% if panneau %}{% with c=panneau.client r=panneau.r acces=panneau.r.acces %}
+  <div class="carte" id="panneau-client">
+    <div class="entete-page" style="margin-bottom:6px">
+      <div class="fiche-client"><div class="avatar">{{ c|initiales }}</div>
+        <div><h2 style="margin:0"><a href="{% url 'client_detail' c.pk %}">{{ c.nom_complet }}</a></h2><div class="muted">{{ c.identifiant }} · {{ c.telephone }}</div></div></div>
+      <a class="btn btn-petit" href="{% url 'presences' %}">✕ Fermer</a>
+    </div>
+
+    {% if r.presence %}
+      <div class="verdict present"><div class="icone">●</div><div><div class="titre">PRÉSENT EN SALLE</div>
+        Arrivé à {{ r.presence.heure_entree|heure }} · {{ r.presence.duree_actuelle|duree }}
+        {% if r.presence.depassement_en_cours %}<br><b>Dépassement en cours : +{{ r.presence.depassement_en_cours }} min</b>{% endif %}</div></div>
+    {% elif acces.autorise %}
+      <div class="verdict ok"><div class="icone">✔</div><div><div class="titre">ACCÈS AUTORISÉ</div>{{ acces.abonnement.designation }}</div></div>
+    {% else %}
+      <div class="verdict bloque"><div class="icone">✖</div><div><div class="titre">ACCÈS BLOQUÉ</div>{{ acces.message }}</div></div>
+    {% endif %}
+    {% for a in acces.avertissements %}<div class="msg warning">{{ a }}</div>{% endfor %}
+    {% include "gym/_soldes.html" %}
+
+    {% if not user.est_coach %}
+    <div class="mt">
+    {% if r.presence %}
+      <form method="post" action="{% url 'sortie' r.presence.pk %}" data-confirm="Enregistrer la SORTIE de {{ c.nom_complet }} ?" data-confirm-titre="Sortie">{% csrf_token %}
+        <button class="btn btn-sortie" type="submit">SORTIE ←</button></form>
+    {% elif acces.autorise %}
+      <form method="post" action="{% url 'entree' c.pk %}">{% csrf_token %}
+        <div class="ligne-champ mb" style="max-width:320px"><label>Coach de la séance (facultatif)</label>
+          <select class="champ" name="coach"><option value="">{% if c.coach %}{{ c.coach }} (coach attitré){% else %}—{% endif %}</option>
+            {% for co in coachs %}<option value="{{ co.pk }}">{{ co }}</option>{% endfor %}</select></div>
+        <button class="btn btn-entree" type="submit">→ ENTRÉE</button></form>
+    {% else %}
+      <div class="actions" style="display:flex;gap:8px;flex-wrap:wrap">
+        {% if acces.proposer_renouvellement or acces.code == "SEANCE_CONSOMMEE" or acces.code == "AUCUN_ABONNEMENT" %}
+        <a class="btn btn-or" href="{% url 'client_vente' c.pk %}">{% icone 'card' %} Renouveler / vendre une séance</a>{% endif %}
+        {% if acces.code == "PAIEMENT_EN_ATTENTE" %}<a class="btn btn-or" href="{% url 'client_detail' c.pk %}">Régler le paiement</a>{% endif %}
+      </div>
+      {% if acces.peut_deroger %}
+      <details class="repli"><summary>Autorisation exceptionnelle (responsable)</summary>
+        <form method="post" action="{% url 'entree_autorisee' c.pk %}" data-confirm="Enregistrer une entrée exceptionnelle pour {{ c.nom_complet }} ? Elle sera tracée avec la justification et le nom du responsable." data-confirm-titre="Autorisation exceptionnelle">{% csrf_token %}
+          {% with form=panneau.auto_form %}
+          <div class="form-grille">
+            <div class="ligne-champ"><label>{{ form.motif.label }}</label>{{ form.motif }}</div>
+            <div class="ligne-champ plein"><label>{{ form.justification.label }}</label>{{ form.justification }}</div>
+          </div>
+          {% include "gym/_responsable.html" %}{% endwith %}
+          <button class="btn btn-danger mt" type="submit">Autoriser et enregistrer l'entrée</button>
+        </form></details>
+      {% endif %}
+    {% endif %}
+    </div>
+    {% endif %}
+    {% if acces.proposer_renouvellement and acces.autorise and not user.est_coach %}<a class="btn btn-petit mt" href="{% url 'client_vente' c.pk %}">Renouveler dès maintenant</a>{% endif %}
+  </div>
+  {% endwith %}{% else %}
+  <div class="carte"><h2>Aujourd'hui</h2>
+    <div class="soldes"><div class="solde"><div class="n">{{ en_cours|length }}</div><div class="l">Présents</div></div>
+      <div class="solde"><div class="n">{{ autres|length }}</div><div class="l">Sortis</div></div>
+      <div class="solde"><div class="n">{{ anciennes|length }}</div><div class="l">Sorties oubliées</div></div></div>
+  </div>
+  {% endif %}
+</div>
+
+<div class="carte mt">
+  <div class="entete-page" style="margin-bottom:8px"><h2 style="margin:0"><span class="point-vert"></span>Tableau des présences en temps réel</h2><span class="muted petit">Mise à jour automatique toutes les 20 secondes</span></div>
+  <div id="tableau-presences" data-url="{% url 'presences_tableau' %}">{% include "gym/presences/_tableau.html" %}</div>
+</div>
+{% endblock %}

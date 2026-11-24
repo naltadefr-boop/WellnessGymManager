@@ -1,0 +1,26 @@
+{% extends "gym/base.html" %}
+{% block titre %}Paramètres{% endblock %}
+{% block contenu %}
+<div class="entete-page"><h1>Paramètres</h1><a class="btn" href="{% url 'sauvegardes' %}">Sauvegardes</a></div>
+<form method="post" enctype="multipart/form-data">{% csrf_token %}
+<div class="grille g2">
+  <div class="carte"><h2>Établissement et identité visuelle</h2>
+    <div class="form-grille">{% for f in form %}{% if f.name in "nom_etablissement service adresse telephone email mentions_legales logo cachet devise indicatif_pays mention_remerciement" %}{% include "gym/_champ1.html" %}{% endif %}{% endfor %}</div></div>
+  <div class="carte"><h2>Règles de gestion</h2>
+    <div class="form-grille">{% for f in form %}{% if f.name in "jours_alerte_expiration seuil_alerte_seances mode_semaine_partielle validite_ticket_jours absence_decompte_seance bloquer_si_impaye" %}{% include "gym/_champ1.html" %}{% endif %}{% endfor %}</div>
+    <p class="muted petit mt">Exemple de calcul (4 séances/semaine, mois de 31 jours = 4 semaines + 3 jours) : prorata supérieur → 18 séances ; prorata inférieur → 17 ; quota complet → 20. Le report des séances non utilisées se règle formule par formule.</p></div>
+  <div class="carte"><h2>Sécurité et sauvegarde</h2>
+    <div class="form-grille">{% for f in form %}{% if f.name in "duree_inactivite_minutes sauvegarde_auto sauvegarde_intervalle_heures sauvegarde_conservation dossier_sauvegarde_externe" %}{% include "gym/_champ1.html" %}{% endif %}{% endfor %}</div>
+    <p class="muted petit mt">Données stockées dans : <code>{{ data_dir }}</code><br>Fichier de configuration (réseau, base PostgreSQL) : <code>{{ config_file }}</code></p></div>
+  <div class="carte"><h2>Courrier électronique (envoi des factures)</h2>
+    <div class="form-grille">{% for f in form %}{% if f.name|slice:":5" == "smtp_" %}{% include "gym/_champ1.html" %}{% endif %}{% endfor %}</div>
+    <p class="muted petit mt">Exemple Gmail : serveur smtp.gmail.com, port 587, TLS, mot de passe d'application.</p></div>
+</div>
+<div class="mt"><button class="btn btn-primaire" style="padding:12px 26px">Enregistrer les paramètres</button></div>
+</form>
+<div class="carte mt"><h2>Modes de paiement</h2>
+  <table class="tableau"><tbody>{% for m in modes %}<tr{% if not m.actif %} style="opacity:.55"{% endif %}><td><b>{{ m.nom }}</b></td><td>{% if m.actif %}<span class="badge ok">Actif</span>{% else %}<span class="badge neutre">Désactivé</span>{% endif %}</td>
+    <td class="droite"><form class="inline" method="post" action="{% url 'mode_basculer' m.pk %}">{% csrf_token %}<button class="btn btn-petit">{% if m.actif %}Désactiver{% else %}Activer{% endif %}</button></form></td></tr>{% endfor %}</tbody></table>
+  <form method="post" action="{% url 'mode_ajouter' %}" class="barre-filtres mt">{% csrf_token %}<input class="champ" name="nom" placeholder="Nouveau mode (ex. Wave, Moov Money)" required><input type="hidden" name="ordre" value="50"><input type="hidden" name="actif" value="on"><button class="btn btn-primaire">Ajouter</button></form>
+</div>
+{% endblock %}

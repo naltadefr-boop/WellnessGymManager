@@ -1,0 +1,54 @@
+{% extends "gym/base.html" %}{% load gym_extras %}
+{% block titre %}Tableau de bord{% endblock %}
+{% block contenu %}
+<div class="entete-page">
+  <div><h1>Tableau de bord</h1><div class="muted">{{ jour|date:"l j F Y"|capfirst }} · bonjour {{ user.first_name|default:user.username }}</div></div>
+  <div class="actions">
+    <a class="btn btn-primaire" href="{% url 'presences' %}">{% icone 'clock' %} Pointer une entrée</a>
+    <a class="btn btn-or" href="{% url 'client_nouveau' %}">{% icone 'plus' %} Nouveau client</a>
+  </div>
+</div>
+
+{% include "gym/_alertes.html" %}
+
+<div class="section-titre"><h3>Clients</h3></div>
+<div class="grille g4">
+  <a class="kpi" href="{% url 'clients' %}"><div class="lib">Clients enregistrés</div><div class="val">{{ nb_clients }}</div></a>
+  <a class="kpi" href="{% url 'abonnements' %}?etat=actifs"><div class="lib">Clients actifs</div><div class="val">{{ nb_actifs }}</div><div class="sous">abonnement ou séance valide aujourd'hui</div></a>
+  <div class="kpi"><div class="lib">Nouveaux clients</div><div class="val">{{ nb_nouveaux }}</div><div class="sous">depuis le 1er du mois</div></div>
+  <a class="kpi" href="{% url 'abonnements' %}?etat=expires"><div class="lib">Abonnements expirés</div><div class="val" style="color:var(--danger)">{{ nb_expires }}</div><div class="sous">clients à relancer</div></a>
+</div>
+
+<div class="section-titre"><h3>Présences</h3></div>
+<div class="grille g4">
+  <a class="kpi accent" href="{% url 'presences' %}"><div class="lib"><span class="point-vert"></span>Présents actuellement</div><div class="val">{{ nb_presents }}</div></a>
+  <div class="kpi"><div class="lib">Fréquentation du jour</div><div class="val">{{ nb_frequentation }}</div><div class="sous">clients différents</div></div>
+  <div class="kpi"><div class="lib">Entrées</div><div class="val">{{ nb_entrees }}</div></div>
+  <div class="kpi"><div class="lib">Sorties</div><div class="val">{{ nb_sorties }}</div></div>
+</div>
+
+<div class="section-titre"><h3>Finances</h3></div>
+<div class="grille g3">
+  <div class="kpi accent"><div class="lib">Encaissé aujourd'hui</div><div class="val argent">{{ enc_jour|fcfa }}</div></div>
+  <div class="kpi"><div class="lib">Encaissé cette semaine</div><div class="val argent">{{ enc_semaine|fcfa }}</div></div>
+  <div class="kpi"><div class="lib">Encaissé ce mois</div><div class="val argent">{{ enc_mois|fcfa }}</div></div>
+</div>
+<div class="grille g3 mt">
+  <div class="kpi"><div class="lib">Abonnements vendus (mois)</div><div class="val">{{ abos_vendus }}</div></div>
+  <div class="kpi"><div class="lib">Séances journalières / horaires vendues (mois)</div><div class="val">{{ seances_vendues }}</div></div>
+  <a class="kpi" href="{% url 'paiements' %}?filtre=impayees"><div class="lib">Paiements incomplets</div><div class="val" style="color:{% if nb_impayes %}var(--danger){% else %}var(--ok){% endif %}">{{ nb_impayes }}</div><div class="sous">{{ total_impayes|fcfa }} restant à encaisser</div></a>
+</div>
+
+<div class="grille g2 mt">
+  <div class="carte">
+    <h3>Entrées — 14 derniers jours</h3>
+    <div class="histo">{% for g in graph %}<div class="barre" title="{{ g.jour|date:'d/m' }} : {{ g.entrees }} entrée(s)"><div class="v">{% if g.entrees %}{{ g.entrees }}{% endif %}</div><span style="height:{{ g.h_e }}%"></span></div>{% endfor %}</div>
+    <div class="histo-legende">{% for g in graph %}<div>{{ g.jour|date:"d/m" }}</div>{% endfor %}</div>
+  </div>
+  <div class="carte">
+    <h3>Recettes nettes — 14 derniers jours</h3>
+    <div class="histo or">{% for g in graph %}<div class="barre" title="{{ g.jour|date:'d/m' }} : {{ g.recette|fcfa }}"><div class="v"></div><span style="height:{{ g.h_r }}%"></span></div>{% endfor %}</div>
+    <div class="histo-legende">{% for g in graph %}<div>{{ g.jour|date:"d/m" }}</div>{% endfor %}</div>
+  </div>
+</div>
+{% endblock %}

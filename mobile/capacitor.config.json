@@ -1,0 +1,16 @@
+{
+  "appId": "com.wellnesshotel.gym",
+  "appName": "Wellness Gym",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "http",
+    "cleartext": true
+  },
+  "android": {
+    "allowMixedContent": true
+  },
+  "ios": {
+    "contentInset": "never"
+  },
+  "backgroundColor": "#0F3D36"
+}

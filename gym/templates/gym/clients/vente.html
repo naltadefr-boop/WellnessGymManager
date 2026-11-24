@@ -1,0 +1,20 @@
+{% extends "gym/base.html" %}{% load gym_extras %}
+{% block titre %}Vente — {{ client.nom_complet }}{% endblock %}
+{% block contenu %}
+<div class="entete-page"><div><h1>Abonnement / renouvellement</h1><div class="muted">{{ client.nom_complet }} · {{ client.identifiant }} · {{ client.telephone }}</div></div>
+  <a class="btn" href="{% url 'client_detail' client.pk %}">← Fiche client</a></div>
+<div class="grille g-3-2">
+  <div class="carte">
+    <form method="post" data-confirm="Valider la vente et générer la facture ?" data-confirm-titre="Encaissement">{% csrf_token %}
+      <div class="form-grille">{% include "gym/_champs.html" %}</div>
+      <div id="info-formule" class="msg info mt"></div>
+      <div class="mt"><button class="btn btn-primaire" style="padding:12px 26px" type="submit">Valider et générer la facture</button></div>
+    </form>
+  </div>
+  <div class="carte"><h2>Situation actuelle</h2>{% include "gym/_soldes.html" %}
+    {% if r.reste_a_payer %}<div class="msg danger mt">Reste à payer sur d'anciennes factures : {{ r.reste_a_payer|fcfa }}</div>{% endif %}
+    <p class="muted petit mt">En cas de renouvellement anticipé, le nouvel abonnement commence automatiquement le lendemain de la fin de l'abonnement en cours : aucun jour n'est perdu. L'historique du client est conservé.</p>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}<script>window.FORMULES = {{ formules_json|safe }}; window.PROPOSITIONS = {{ propositions|safe }};</script>{% endblock %}

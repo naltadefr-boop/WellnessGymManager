@@ -1,0 +1,19 @@
+{% extends "gym/base.html" %}
+{% block titre %}Installation{% endblock %}
+{% block hors_connexion %}
+<div class="page-connexion">
+  <div class="connexion-visuel">
+    <div class="embleme" style="width:70px;height:70px;font-size:34px;line-height:64px">W</div>
+    <div><div class="titre">BIENVENUE</div><div class="or">Premier démarrage</div>
+      <p style="max-width:420px;opacity:.85;margin-top:22px">Créez le compte du responsable de la salle de sport. Ce compte aura tous les droits : tarifs, personnel, paramètres, rapports.</p></div>
+    <div></div>
+  </div>
+  <div class="connexion-form"><div class="boite" style="max-width:460px">
+    <h1>Compte administrateur</h1>
+    <form method="post">{% csrf_token %}
+      <div class="form-grille">{% include "gym/_champs.html" %}</div>
+      <button class="btn btn-primaire mt" style="width:100%;padding:12px" type="submit">Créer le compte et commencer</button>
+    </form>
+  </div></div>
+</div>
+{% endblock %}

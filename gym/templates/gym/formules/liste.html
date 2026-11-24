@@ -1,0 +1,20 @@
+{% extends "gym/base.html" %}{% load gym_extras %}
+{% block titre %}Formules et tarifs{% endblock %}
+{% block contenu %}
+<div class="entete-page"><div><h1>Formules et tarifs</h1><div class="muted">Les tarifs sont définis par le responsable. Un abonnement vendu conserve toujours le prix et les conditions du jour de la vente.</div></div>
+  {% if user.est_admin %}<div class="actions"><a class="btn btn-or" href="{% url 'formule_nouvelle' %}">+ Nouvelle formule</a></div>{% endif %}</div>
+<div class="carte"><div class="table-wrap"><table class="tableau">
+  <thead><tr><th>Formule</th><th>Catégorie</th><th class="droite">Prix</th><th>Conditions</th><th>Vendues</th><th>Statut</th>{% if user.est_admin %}<th></th>{% endif %}</tr></thead>
+  <tbody>{% for f in formules %}
+  <tr{% if not f.actif %} style="opacity:.55"{% endif %}><td><b>{{ f.nom }}</b>{% if f.description %}<div class="muted petit">{{ f.description }}</div>{% endif %}</td>
+    <td><span class="badge {% if f.type == 'MENSUEL' %}or{% elif f.type == 'HORAIRE' %}info{% else %}neutre{% endif %}">{{ f.get_type_display }}</span></td>
+    <td class="droite nowrap"><b>{{ f.prix|fcfa }}</b></td>
+    <td class="petit">{% if f.type == "MENSUEL" %}{{ f.duree_mois }} mois · {% if f.seances_par_semaine %}{{ f.seances_par_semaine }} séances/semaine · séances non utilisées {% if f.report_seances %}reportables{% else %}perdues chaque semaine{% endif %}{% else %}accès illimité{% endif %}
+      {% elif f.type == "HORAIRE" %}{{ f.duree_minutes|duree }} · tolérance {{ f.tolerance_minutes }} min · dépassement : {{ f.tarif_depassement|fcfa }} par tranche de {{ f.tranche_depassement_minutes }} min
+      {% else %}1 séance · nouvelle séance = nouveau paiement{% endif %}</td>
+    <td>{{ stats|get:f.pk }}</td>
+    <td>{% if f.actif %}<span class="badge ok">Active</span>{% else %}<span class="badge neutre">Désactivée</span>{% endif %}</td>
+    {% if user.est_admin %}<td class="droite nowrap"><a class="btn btn-petit" href="{% url 'formule_modifier' f.pk %}">Modifier</a>
+      <form class="inline" method="post" action="{% url 'formule_basculer' f.pk %}" data-confirm="{% if f.actif %}Désactiver cette formule ? Elle ne pourra plus être vendue, l'historique est conservé.{% else %}Réactiver cette formule ?{% endif %}">{% csrf_token %}<button class="btn btn-petit">{% if f.actif %}Désactiver{% else %}Réactiver{% endif %}</button></form></td>{% endif %}</tr>
+  {% endfor %}</tbody></table></div></div>
+{% endblock %}

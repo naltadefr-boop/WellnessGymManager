@@ -1,0 +1,18 @@
+{% extends "gym/base.html" %}{% load gym_extras %}
+{% block titre %}Réservations{% endblock %}
+{% block contenu %}
+<div class="entete-page"><div><h1>Réservations et absences</h1><div class="muted">Du {{ debut|date:"l d/m" }} au {{ fin|date:"l d/m/Y" }}.
+  {% if params.absence_decompte_seance %}Règle en vigueur : une absence décompte une séance.{% else %}Règle en vigueur : une absence ne décompte pas de séance.{% endif %}</div></div>
+  <div class="actions"><a class="btn" href="?date={{ precedent|date:'Y-m-d' }}">← Semaine précédente</a><a class="btn" href="?date={{ jour|date:'Y-m-d' }}">Aujourd'hui</a><a class="btn" href="?date={{ suivant|date:'Y-m-d' }}">Semaine suivante →</a></div></div>
+<div class="carte"><p class="muted petit">Pour créer une réservation, ouvrez la fiche du client (rubrique « Réservations à venir »). Une réservation est marquée « honorée » automatiquement lors de l'entrée du client.</p>
+<table class="tableau"><thead><tr><th>Date</th><th>Heure</th><th>Client</th><th>Coach</th><th>Note</th><th>Statut</th><th></th></tr></thead><tbody>
+{% for r in reservations %}
+<tr class="{% if r.statut == 'ABSENT' %}danger{% elif r.statut == 'HONOREE' %}surligne{% endif %}"><td class="nowrap">{{ r.date|date:"D d/m" }}</td><td>{{ r.heure|time:"H:i"|default:"—" }}</td>
+  <td><a href="{% url 'client_detail' r.client.pk %}">{{ r.client.nom_complet }}</a></td><td>{{ r.coach|default:"—" }}</td><td class="petit">{{ r.note }}</td>
+  <td><span class="badge {% if r.statut == 'ABSENT' %}danger{% elif r.statut == 'HONOREE' %}ok{% elif r.statut == 'ANNULEE' %}neutre{% else %}info{% endif %}">{{ r.get_statut_display }}</span></td>
+  <td class="droite nowrap">{% if not user.est_coach and r.statut == "PREVUE" %}
+    <form class="inline" method="post" action="{% url 'reservation_statut' r.pk 'ABSENT' %}" data-confirm="Marquer {{ r.client.nom_complet }} absent(e) ?">{% csrf_token %}<input type="hidden" name="retour" value="{{ request.get_full_path }}"><button class="btn btn-petit btn-danger">Absent</button></form>
+    <form class="inline" method="post" action="{% url 'reservation_statut' r.pk 'ANNULEE' %}">{% csrf_token %}<input type="hidden" name="retour" value="{{ request.get_full_path }}"><button class="btn btn-petit">Annuler</button></form>{% endif %}</td></tr>
+{% empty %}<tr><td colspan="7" class="vide">Aucune réservation sur cette période.</td></tr>{% endfor %}
+</tbody></table></div>
+{% endblock %}

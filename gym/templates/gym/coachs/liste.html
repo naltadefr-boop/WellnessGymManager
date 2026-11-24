@@ -1,0 +1,15 @@
+{% extends "gym/base.html" %}
+{% block titre %}Coachs{% endblock %}
+{% block contenu %}
+<div class="entete-page"><h1>Gestion des coachs</h1>{% if user.est_admin %}<a class="btn btn-or" href="{% url 'coach_nouveau' %}">+ Nouveau coach</a>{% endif %}</div>
+<div class="carte"><table class="tableau">
+  <thead><tr><th>Coach</th><th>Fonction</th><th>Téléphone</th><th>Statut</th><th>Clients attitrés</th><th>Séances (mois)</th><th>Séances (total)</th><th>Observations</th><th>Compte</th><th></th></tr></thead>
+  <tbody>{% for l in lignes %}{% with c=l.c %}
+  <tr><td><a href="{% url 'coach_detail' c.pk %}"><b>{{ c }}</b></a><div class="muted petit">depuis le {{ c.date_enregistrement|date:"d/m/Y" }}</div></td><td>{{ c.fonction }}</td><td>{{ c.telephone }}</td>
+    <td><span class="badge {% if c.statut == 'ACTIF' %}ok{% else %}neutre{% endif %}">{{ c.get_statut_display }}</span></td>
+    <td>{{ l.clients }}</td><td>{{ l.mois }}</td><td>{{ l.total }}</td><td>{{ l.obs }}</td><td class="petit">{{ c.utilisateur.username|default:"—" }}</td>
+    <td class="droite">{% if user.est_admin %}<a class="btn btn-petit" href="{% url 'coach_modifier' c.pk %}">Modifier</a>{% endif %}</td></tr>{% endwith %}
+  {% empty %}<tr><td colspan="10" class="vide">Aucun coach enregistré.</td></tr>{% endfor %}</tbody></table>
+  <p class="muted petit mt">Pour qu'un coach se connecte, créez-lui un compte (rôle Coach) dans « Personnel et utilisateurs », puis associez ce compte à sa fiche. Il n'aura jamais accès aux données financières.</p>
+</div>
+{% endblock %}

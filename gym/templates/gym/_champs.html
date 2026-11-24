@@ -1,0 +1,10 @@
+{% for f in form.visible_fields %}
+<div class="ligne-champ{% if f.widget_type == 'checkbox' %} check-ligne{% endif %}{% if f.widget_type == 'textarea' or f.name in plein %} plein{% endif %}">
+  {% if f.widget_type == 'checkbox' %}{{ f }} <label for="{{ f.id_for_label }}">{{ f.label }}</label>
+  {% else %}<label for="{{ f.id_for_label }}">{{ f.label }}{% if f.field.required %} *{% endif %}</label>{{ f }}{% endif %}
+  {% if f.help_text %}<div class="aide">{{ f.help_text|safe }}</div>{% endif %}
+  {% for e in f.errors %}<div class="erreur">{{ e }}</div>{% endfor %}
+</div>
+{% endfor %}
+{% for h in form.hidden_fields %}{{ h }}{% endfor %}
+{% for e in form.non_field_errors %}<div class="msg danger plein">{{ e }}</div>{% endfor %}

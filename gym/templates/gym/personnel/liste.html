@@ -1,0 +1,19 @@
+{% extends "gym/base.html" %}
+{% block titre %}Personnel{% endblock %}
+{% block contenu %}
+<div class="entete-page"><h1>Personnel et utilisateurs</h1><a class="btn btn-or" href="{% url 'utilisateur_nouveau' %}">+ Nouveau compte</a></div>
+<div class="carte"><table class="tableau">
+  <thead><tr><th>Nom</th><th>Identifiant</th><th>Rôle</th><th>Téléphone</th><th>Dernière connexion</th><th>Statut</th><th></th></tr></thead>
+  <tbody>{% for u in utilisateurs %}<tr{% if not u.is_active %} style="opacity:.55"{% endif %}>
+    <td><b>{{ u.nom_complet }}</b></td><td>{{ u.username }}</td>
+    <td><span class="badge {% if u.role == 'ADMIN' %}or{% elif u.role == 'COACH' %}info{% else %}ok{% endif %}">{{ u.get_role_display }}</span></td>
+    <td>{{ u.telephone|default:"—" }}</td><td>{{ u.last_login|date:"d/m/Y H:i"|default:"jamais" }}</td>
+    <td>{% if u.is_active %}<span class="badge ok">Actif</span>{% else %}<span class="badge neutre">Désactivé</span>{% endif %}</td>
+    <td class="droite"><a class="btn btn-petit" href="{% url 'utilisateur_modifier' u.pk %}">Modifier</a></td></tr>{% endfor %}</tbody></table>
+  <div class="grille g3 mt">
+    <div class="alerte-bloc ok"><h4>Administrateur / Responsable</h4><p class="petit" style="margin:0">Accès complet : tarifs, personnel, paramètres, rapports, annulations, remboursements, autorisations exceptionnelles, historique.</p></div>
+    <div class="alerte-bloc info"><h4>Réceptionniste</h4><p class="petit" style="margin:0">Clients, paiements, factures, entrées/sorties. Ne peut ni modifier les tarifs ni annuler un paiement sans les identifiants d'un responsable.</p></div>
+    <div class="alerte-bloc alerte"><h4>Coach</h4><p class="petit" style="margin:0">Ses clients, leurs présences et ses observations. Aucune donnée financière.</p></div>
+  </div>
+</div>
+{% endblock %}

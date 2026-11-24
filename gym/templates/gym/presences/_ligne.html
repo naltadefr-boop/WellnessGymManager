@@ -1,0 +1,13 @@
+{% load gym_extras %}
+<tr class="{% if p.statut == 'EN_COURS' and p.depassement_en_cours %}danger{% elif p.statut == 'EN_COURS' %}surligne{% elif p.depassement_minutes %}alerte{% endif %}">
+  <td><a href="{% url 'presences' %}?client={{ p.client.pk }}"><b>{{ p.client.nom_complet }}</b></a>{% if p.autorisation_id %} <span class="badge or" title="Autorisation exceptionnelle">exception</span>{% endif %}</td>
+  <td class="petit">{{ p.type_abonnement|truncatechars:34 }}</td>
+  <td class="nowrap">{{ p.heure_entree|heure }}</td>
+  <td class="nowrap">{{ p.heure_sortie|heure }}</td>
+  <td class="nowrap">{% if p.statut == "EN_COURS" %}{{ p.duree_actuelle|duree }} <span class="muted">en cours</span>{% if p.depassement_en_cours %}<div class="badge danger">+{{ p.depassement_en_cours }} min</div>{% endif %}{% else %}{{ p.duree_minutes|duree }}{% if p.depassement_minutes %} <span class="badge alerte">+{{ p.depassement_minutes }} min</span>{% endif %}{% endif %}</td>
+  <td class="cache-mobile">{% if p.seances_restantes_semaine is not None %}{{ p.seances_restantes_semaine }}{% else %}—{% endif %}</td>
+  <td>{% if p.statut == "EN_COURS" %}<span class="badge info"><span class="point-vert"></span>Présent</span>{% elif p.statut == "ANNULEE" %}<span class="badge neutre">Annulée</span>{% else %}<span class="badge ok">Sorti</span>{% endif %}</td>
+  <td class="droite">{% if p.statut == "EN_COURS" and not user.est_coach %}
+    <form class="inline" method="post" action="{% url 'sortie' p.pk %}" data-confirm="Enregistrer la SORTIE de {{ p.client.nom_complet }} ?" data-confirm-titre="Sortie">{% csrf_token %}
+      <button class="btn btn-petit btn-danger" type="submit">SORTIE</button></form>{% endif %}</td>
+</tr>

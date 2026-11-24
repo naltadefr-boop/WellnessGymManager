@@ -1,0 +1,21 @@
+{% extends "gym/base.html" %}{% load gym_extras %}
+{% block titre %}Nouveau client{% endblock %}
+{% block contenu %}
+<div class="entete-page"><div><h1>Nouveau client</h1><div class="muted">Enregistrement, formule, paiement et facture en une seule étape.</div></div></div>
+<form method="post" data-confirm="Enregistrer ce client (et, si une formule est choisie, le paiement et la facture) ?" data-confirm-titre="Nouveau client">{% csrf_token %}
+<div class="grille g2">
+  <div class="carte"><h2>1. Identité du client</h2>
+    <div class="form-grille">{% include "gym/_champs.html" with form=form %}</div>
+    {% if doublon %}<div class="ligne-champ check-ligne"><input class="check" type="checkbox" name="confirmer_doublon" id="cd" value="1"><label for="cd">Créer quand même (ce n'est pas {{ doublon.nom_complet }})</label></div>{% endif %}
+  </div>
+  <div class="carte"><h2>2. Formule et paiement <span class="muted petit">(facultatif)</span></h2>
+    <div class="form-grille">{% include "gym/_champs.html" with form=vente plein="formule observations" %}</div>
+    <div id="info-formule" class="msg info mt"></div>
+    <p class="muted petit">Un paiement partiel est accepté : le reste à payer sera signalé dans les alertes.</p>
+  </div>
+</div>
+<div class="mt"><button class="btn btn-primaire" style="padding:12px 26px" type="submit">Enregistrer le client</button>
+  <a class="btn" href="{% url 'clients' %}">Annuler</a></div>
+</form>
+{% endblock %}
+{% block scripts %}<script>window.FORMULES = {{ formules_json|safe }};</script>{% endblock %}

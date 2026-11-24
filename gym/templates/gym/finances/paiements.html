@@ -1,0 +1,46 @@
+{% extends "gym/base.html" %}{% load gym_extras %}
+{% block titre %}Paiements et finances{% endblock %}
+{% block contenu %}
+<div class="entete-page"><h1>Paiements et finances</h1>
+  <div class="actions"><a class="btn" href="{% url 'factures' %}">{% icone 'file' %} Factures</a>{% if user.est_admin %}<a class="btn" href="{% url 'rapport' 'paiements' %}">{% icone 'chart' %} Rapport des paiements</a>{% endif %}</div></div>
+<div class="grille g3 mb">
+  <div class="kpi accent"><div class="lib">Encaissé aujourd'hui</div><div class="val argent">{{ enc_jour|fcfa }}</div></div>
+  <div class="kpi"><div class="lib">Cette semaine</div><div class="val argent">{{ enc_semaine|fcfa }}</div></div>
+  <div class="kpi"><div class="lib">Ce mois</div><div class="val argent">{{ enc_mois|fcfa }}</div><div class="sous">net des remboursements</div></div>
+</div>
+<div class="carte">
+  <div class="onglets">
+    {% for code, lib in types %}{% endfor %}
+    <a href="?filtre=toutes&periode={{ periode }}" class="{% if filtre == 'toutes' %}actif{% endif %}">Toutes</a>
+    <a href="?filtre=impayees" class="{% if filtre == 'impayees' %}actif{% endif %}">Paiements en attente {% if nb_impayes %}<span class="badge danger">{{ nb_impayes }}</span>{% endif %}</a>
+    <a href="?filtre=annulees&periode={{ periode }}" class="{% if filtre == 'annulees' %}actif{% endif %}">Annulées</a>
+  </div>
+  <form class="barre-filtres" method="get"><input type="hidden" name="filtre" value="{{ filtre }}">
+    <input class="champ" name="q" value="{{ q }}" placeholder="N° de transaction, facture ou client">
+    {% if filtre != "impayees" %}<select class="champ" name="periode" onchange="this.form.submit()">
+      <option value="jour" {% if periode == "jour" %}selected{% endif %}>Aujourd'hui</option>
+      <option value="semaine" {% if periode == "semaine" %}selected{% endif %}>Cette semaine</option>
+      <option value="mois" {% if periode == "mois" %}selected{% endif %}>Ce mois</option>
+      <option value="tout" {% if periode == "tout" %}selected{% endif %}>Tout l'historique</option></select>{% endif %}
+    <button class="btn btn-primaire">Filtrer</button></form>
+  <div class="table-wrap"><table class="tableau">
+    <thead><tr><th>Date</th><th>Transaction</th><th>Client</th><th>Objet</th><th class="droite">À payer</th><th class="droite">Payé</th><th class="droite">Reste</th><th class="cache-mobile">Réceptionniste</th><th></th></tr></thead>
+    <tbody>{% for t in page %}
+      <tr class="{% if t.statut == 'ANNULEE' %}{% elif t.reste %}alerte{% endif %}">
+        <td class="nowrap">{{ t.cree_le|dateheure }}</td><td class="nowrap"><a href="{% url 'transaction' t.pk %}">{{ t.numero }}</a><div class="muted petit">{{ t.facture.numero }}</div></td>
+        <td><a href="{% url 'client_detail' t.client.pk %}">{{ t.client.nom_complet }}</a></td>
+        <td class="petit">{{ t.get_type_display }}<div class="muted">{{ t.designation|truncatechars:50 }}</div></td>
+        <td class="droite nowrap">{{ t.montant_du|fcfa }}</td><td class="droite nowrap">{{ t.montant_paye|fcfa }}</td>
+        <td class="droite nowrap">{% if t.statut == "ANNULEE" %}<span class="badge neutre">Annulée</span>{% elif t.reste %}<b style="color:var(--danger)">{{ t.reste|fcfa }}</b>{% else %}<span class="badge ok">Soldée</span>{% endif %}</td>
+        <td class="cache-mobile">{{ t.cree_par|default:"—" }}</td>
+        <td class="droite"><a class="btn btn-petit" href="{% url 'transaction' t.pk %}">{% if t.reste %}Encaisser{% else %}Ouvrir{% endif %}</a></td></tr>
+    {% empty %}<tr><td colspan="9" class="vide">Aucune transaction.</td></tr>{% endfor %}</tbody></table></div>
+  {% include "gym/_pagination.html" %}
+</div>
+<div class="carte"><h2>Derniers encaissements</h2>
+  <table class="tableau"><thead><tr><th>Date</th><th>Reçu</th><th>Client</th><th>Mode</th><th class="droite">Montant</th><th>Par</th><th></th></tr></thead><tbody>
+  {% for r in derniers_reglements %}<tr><td>{{ r.date|dateheure }}</td><td>{{ r.numero }}</td><td>{{ r.transaction.client.nom_complet }}</td><td>{{ r.mode }}{% if r.reference %} <span class="muted petit">{{ r.reference }}</span>{% endif %}</td>
+    <td class="droite">{{ r.montant|fcfa }}{% if r.annule %} <span class="badge neutre">annulé</span>{% endif %}</td><td>{{ r.recu_par }}</td><td class="droite"><a class="btn btn-petit" href="{% url 'recu_pdf' r.pk %}" target="_blank">Reçu</a></td></tr>
+  {% empty %}<tr><td colspan="7" class="vide">Aucun encaissement.</td></tr>{% endfor %}</tbody></table>
+</div>
+{% endblock %}

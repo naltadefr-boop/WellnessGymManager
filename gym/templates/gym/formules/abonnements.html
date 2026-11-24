@@ -1,0 +1,30 @@
+{% extends "gym/base.html" %}{% load gym_extras %}
+{% block titre %}Abonnements{% endblock %}
+{% block contenu %}
+<div class="entete-page"><h1>Abonnements</h1></div>
+<div class="carte">
+  <div class="onglets">
+    <a href="?etat=actifs" class="{% if etat == 'actifs' %}actif{% endif %}">Valides aujourd'hui</a>
+    <a href="?etat=a_renouveler" class="{% if etat == 'a_renouveler' %}actif{% endif %}">À renouveler</a>
+    <a href="?etat=expires" class="{% if etat == 'expires' %}actif{% endif %}">Expirés (non renouvelés)</a>
+    <a href="?etat=a_venir" class="{% if etat == 'a_venir' %}actif{% endif %}">À venir</a>
+    <a href="?etat=annules" class="{% if etat == 'annules' %}actif{% endif %}">Annulés</a>
+    <a href="?etat=tous" class="{% if etat == 'tous' %}actif{% endif %}">Tous</a>
+  </div>
+  <form class="barre-filtres"><input type="hidden" name="etat" value="{{ etat }}"><input class="champ" name="q" value="{{ q }}" placeholder="Client">
+    <select class="champ" name="formule"><option value="">Toutes les formules</option>{% for f in formules %}<option value="{{ f.pk }}" {% if f.pk|stringformat:"s" == formule_sel %}selected{% endif %}>{{ f.nom }}</option>{% endfor %}</select>
+    <button class="btn btn-primaire">Filtrer</button></form>
+  <div class="table-wrap"><table class="tableau">
+    <thead><tr><th>Client</th><th>Formule</th><th>Début</th><th>Fin</th><th>Séances (semaine)</th><th>Séances (période)</th><th>État</th><th></th></tr></thead>
+    <tbody>{% for l in lignes %}{% with a=l.a d=l.d %}
+    <tr><td><a href="{% url 'client_detail' a.client.pk %}"><b>{{ a.client.nom_complet }}</b></a><div class="muted petit">{{ a.client.identifiant }} · {{ a.client.telephone }}</div></td>
+      <td class="petit">{{ a.designation }}{% if a.est_renouvellement %} <span class="badge or">renouv.</span>{% endif %}</td>
+      <td class="nowrap">{{ a.date_debut|date:"d/m/Y" }}</td><td class="nowrap">{{ a.date_fin|date:"d/m/Y" }}{% if a.etat == "ACTIF" %}<div class="muted petit">{{ a.jours_restants }} j</div>{% endif %}</td>
+      <td>{% if d.illimite %}illimité{% elif a.est_mensuel and d.courante %}{{ d.courante.utilisees }} / {{ d.courante.autorisees }} (reste <b>{{ d.courante.restantes }}</b>){% else %}—{% endif %}</td>
+      <td>{% if d.illimite %}—{% else %}{{ d.total_utilisees }} / {{ d.total_droits }}{% endif %}</td>
+      <td><span class="badge {% etat_badge a.etat %}">{{ a.etat_libelle }}</span></td>
+      <td class="droite"><a class="btn btn-petit {% if etat == 'expires' or etat == 'a_renouveler' %}btn-or{% endif %}" href="{% url 'client_vente' a.client.pk %}">Renouveler</a></td></tr>{% endwith %}
+    {% empty %}<tr><td colspan="8" class="vide">Aucun abonnement.</td></tr>{% endfor %}</tbody></table></div>
+  {% include "gym/_pagination.html" %}
+</div>
+{% endblock %}

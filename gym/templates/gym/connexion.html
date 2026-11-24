@@ -1,0 +1,32 @@
+{% extends "gym/base.html" %}
+{% block titre %}Connexion{% endblock %}
+{% block hors_connexion %}
+<div class="page-connexion">
+  <div class="connexion-visuel">
+    <div>
+      {% if params.logo %}<img src="{{ params.logo.url }}" alt="" style="width:76px;height:76px;object-fit:contain;background:#fff;border-radius:50%;padding:6px">
+      {% else %}<div class="embleme" style="width:70px;height:70px;font-size:34px;line-height:64px">W</div>{% endif %}
+    </div>
+    <div>
+      <div class="titre">{{ params.nom_etablissement|upper }}</div>
+      <div class="or">{{ params.service }}</div>
+      <p style="max-width:420px;opacity:.85;margin-top:22px">Clients, abonnements, pointages, paiements et factures de la salle de sport, réunis dans un seul outil.</p>
+    </div>
+    <div class="petit" style="opacity:.6">Wellness Gym Manager · v1.0</div>
+  </div>
+  <div class="connexion-form">
+    <div class="boite">
+      <h1>Connexion</h1>
+      <p class="muted">Identifiez-vous avec votre compte personnel.</p>
+      {% if messages %}{% for m in messages %}<div class="msg {{ m.tags }}">{{ m }}</div>{% endfor %}{% endif %}
+      {% if erreur %}<div class="msg danger">{{ erreur }}</div>{% endif %}
+      <form method="post">{% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}">
+        <div class="ligne-champ mb"><label for="u">Identifiant</label><input class="champ" id="u" name="username" value="{{ identifiant }}" autofocus autocomplete="username" required></div>
+        <div class="ligne-champ mb"><label for="p">Mot de passe</label><input class="champ" id="p" type="password" name="password" autocomplete="current-password" required></div>
+        <button class="btn btn-primaire" style="width:100%;padding:12px" type="submit">Se connecter</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
